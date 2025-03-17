@@ -1,0 +1,19 @@
+db:
+  host: ""
+  port: 0
+  username: ""
+  password: ""
+  database: ""
+
+logger:
+  level: ""
+  output: ""
+  path: ""
+
+server:
+  httpPort: 0
+  secret: ""
+  authExpMin: 0
+  authExpRefreshMin: 0
+  # rate_limit_max_attempt: 0
+  # ratelimit_time_period: 0
