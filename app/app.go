@@ -12,6 +12,9 @@ import (
 	appCtx "gitlab.apk-group.net/siem/backend/asset-discovery/pkg/context"
 	"gitlab.apk-group.net/siem/backend/asset-discovery/pkg/mysql"
 	"gorm.io/gorm"
+
+	 "gitlab.apk-group.net/siem/backend/asset-discovery/internal/scanner"
+    scannerPort "gitlab.apk-group.net/siem/backend/asset-discovery/internal/scanner/port"
 )
 
 type app struct {
@@ -19,6 +22,7 @@ type app struct {
 	cfg          config.Config
 	assetService assetPort.Service
 	userService  userPort.Service
+	scannerService scannerPort.Service  // New field
 }
 
 func (a *app) AssetService() assetPort.Service {
@@ -81,4 +85,21 @@ func NewMustApp(cfg config.Config) AppContainer {
 		panic(err)
 	}
 	return a
+}
+
+// Add the scanner service getter
+func (a *app) scannerServiceWithDB(db *gorm.DB) scannerPort.Service {
+    return scanner.NewScannerService(storage.NewScannerRepo(db))
+}
+
+func (a *app) ScannerService(ctx context.Context) scannerPort.Service {
+    db := appCtx.GetDB(ctx)
+    if db == nil {
+        if a.scannerService == nil {
+            a.scannerService = a.scannerServiceWithDB(a.db)
+        }
+        return a.scannerService
+    }
+
+    return a.scannerServiceWithDB(db)
 }

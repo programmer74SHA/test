@@ -15,6 +15,8 @@ func Run(appContainer app.AppContainer, cfg config.ServerConfig) error {
 
 	registerAuthAPI(appContainer, cfg, api)
 
+	registerScannerAPI(appContainer, api.Group("/scanners", newAuthMiddleware([]byte(cfg.Secret))))
+
 	return router.Listen(fmt.Sprintf(":%d", cfg.HttpPort))
 }
 

@@ -14,3 +14,11 @@ func userServiceGetter(appContainer app.AppContainer, cfg config.ServerConfig) S
 		return service.NewUserService(appContainer.UserService(ctx), cfg.Secret, cfg.AuthExpMinute, cfg.AuthRefreshMinute)
 	}
 }
+
+
+// scanner service transient instance handler
+func scannerServiceGetter(appContainer app.AppContainer) ServiceGetter[*service.ScannerService] {
+	return func(ctx context.Context) *service.ScannerService {
+		return service.NewScannerService(appContainer.ScannerService(ctx))
+	}
+}
