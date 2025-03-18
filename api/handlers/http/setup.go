@@ -25,3 +25,12 @@ func registerAuthAPI(appContainer app.AppContainer, cfg config.ServerConfig, rou
 	router.Post("/sign-up", setTransaction(appContainer.DB()), SignUp(userSvcGetter))
 	router.Post("/sign-in", setTransaction(appContainer.DB()), SignIn(userSvcGetter, cfg))
 }
+
+func registerScannerAPI(appContainer app.AppContainer, cfg config.ServerConfig, router fiber.Router) {
+	scannerSvGetter := scannerServiceGetter(appContainer, cfg)
+	router.Post("/add-scanner", setTransaction(appContainer.DB()), CreateScanner(scannerSvGetter))
+	router.Post("/get-scanner", setTransaction(appContainer.DB()), GetScanner(scannerSvGetter))
+	router.Post("/update-scanner", setTransaction(appContainer.DB()), UpdateScanner(scannerSvGetter))
+	router.Post("/delete-scanner", setTransaction(appContainer.DB()), DeleteScanner(scannerSvGetter))
+
+}
