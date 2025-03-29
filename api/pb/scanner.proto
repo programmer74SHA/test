@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+option go_package = "gitlab.apk-group.net/siem/backend/asset-discovery/api/pb";
+
+message Scanner {
+    string id = 1;
+    string name = 2 [json_name = "name"];
+    string type = 3 [json_name = "type"];
+    string description = 4 [json_name = "description"];
+    string endpoint = 5 [json_name = "endpoint"];
+    string username = 6 [json_name = "username"];
+    string password = 7 [json_name = "password"];
+    string apiKey = 8 [json_name = "apiKey"];
+    bool enabled = 9 [json_name = "enabled"];
+}
+
+message CreateScannerRequest {
+    string name = 1 [json_name = "name"];
+    string type = 2 [json_name = "type"];
+    string description = 3 [json_name = "description"];
+    string endpoint = 4 [json_name = "endpoint"];
+    string username = 5 [json_name = "username"];
+    string password = 6 [json_name = "password"];
+    string apiKey = 7 [json_name = "apiKey"];
+    bool enabled = 8 [json_name = "enabled"];
+}
+
+message UpdateScannerRequest {
+    string id = 1 [json_name = "id"];
+    string name = 2 [json_name = "name"];
+    string type = 3 [json_name = "type"];
+    string description = 4 [json_name = "description"];
+    string endpoint = 5 [json_name = "endpoint"];
+    string username = 6 [json_name = "username"];
+    string password = 7 [json_name = "password"];
+    string apiKey = 8 [json_name = "apiKey"];
+    bool enabled = 9 [json_name = "enabled"];
+}
+
+message GetScannerRequest {
+    string id = 1 [json_name = "id"];
+}
+
+message DeleteScannerRequest {
+    string id = 1 [json_name = "id"];
+}
+
+
+message DeleteScannersRequest {
+    repeated string ids = 1 [json_name = "ids"];
+}
+
+message ListScannersRequest {
+    string nameFilter = 1 [json_name = "nameFilter"];
+    string typeFilter = 2 [json_name = "typeFilter"];
+    bool enabledFilter = 3 [json_name = "enabledFilter"];
+}
+
+message ListScannersResponse {
+    repeated Scanner scanners = 1 [json_name = "scanners"];
+}
+
+message BatchUpdateScannersEnabledRequest {
+    repeated string ids = 1 [json_name = "ids"];
+    bool enabled = 2 [json_name = "enabled"];
+}
+
+// Generate the protobuf code by running:
+// protoc -I=./api/pb --go_out=./api/pb --go_opt=paths=source_relative  --go-grpc_out=./api/pb --go-grpc_opt=paths=source_relative ./api/pb/scanner.proto
