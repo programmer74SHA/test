@@ -7,6 +7,6 @@
     "database": "asset_discovery"
   },
   "server": {
-    "httpPort": 8888
+    "httpPort": 2030
   }
 }
