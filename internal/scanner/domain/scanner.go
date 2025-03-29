@@ -18,8 +18,6 @@ type ScannerDomain struct {
 	Type        ScannerType
 	Description string
 	Endpoint    string
-	Username    string
-	Password    string
 	APIKey      string
 	Enabled     bool
 	UserID      string // UserID as string to match database

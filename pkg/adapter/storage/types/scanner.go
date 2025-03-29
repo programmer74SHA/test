@@ -11,8 +11,6 @@ type ScannerModel struct {
 	Name      string     `gorm:"column:name;size:255;not null"`
 	IsActive  bool       `gorm:"column:is_active;default:1"`
 	Endpoint  string     `gorm:"column:endpoint;size:255"`
-	Username  string     `gorm:"column:username;size:100"`
-	Password  string     `gorm:"column:password;size:255"`
 	ApiKey    string     `gorm:"column:api_key;size:255"`
 	CreatedAt time.Time  `gorm:"column:created_at;type:datetime;default:CURRENT_TIMESTAMP"`
 	UpdatedAt *time.Time `gorm:"column:updated_at;type:datetime"`

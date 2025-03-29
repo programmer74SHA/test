@@ -8,8 +8,6 @@ message Scanner {
     string type = 3 [json_name = "type"];
     string description = 4 [json_name = "description"];
     string endpoint = 5 [json_name = "endpoint"];
-    string username = 6 [json_name = "username"];
-    string password = 7 [json_name = "password"];
     string apiKey = 8 [json_name = "apiKey"];
     bool enabled = 9 [json_name = "enabled"];
 }
@@ -19,8 +17,6 @@ message CreateScannerRequest {
     string type = 2 [json_name = "type"];
     string description = 3 [json_name = "description"];
     string endpoint = 4 [json_name = "endpoint"];
-    string username = 5 [json_name = "username"];
-    string password = 6 [json_name = "password"];
     string apiKey = 7 [json_name = "apiKey"];
     bool enabled = 8 [json_name = "enabled"];
 }
@@ -31,8 +27,6 @@ message UpdateScannerRequest {
     string type = 3 [json_name = "type"];
     string description = 4 [json_name = "description"];
     string endpoint = 5 [json_name = "endpoint"];
-    string username = 6 [json_name = "username"];
-    string password = 7 [json_name = "password"];
     string apiKey = 8 [json_name = "apiKey"];
     bool enabled = 9 [json_name = "enabled"];
 }

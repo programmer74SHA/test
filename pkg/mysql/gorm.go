@@ -74,8 +74,6 @@ func GormMigrations(db *gorm.DB) {
 			name VARCHAR(255) NOT NULL,
 			is_active BOOLEAN DEFAULT TRUE,
 			endpoint VARCHAR(255),
-			username VARCHAR(100),
-			password VARCHAR(255),
 			api_key VARCHAR(255),
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME,
