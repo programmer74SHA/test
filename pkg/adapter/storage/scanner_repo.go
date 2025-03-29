@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	"gitlab.apk-group.net/siem/backend/asset-discovery/internal/scanner/domain"
 	scannerPort "gitlab.apk-group.net/siem/backend/asset-discovery/internal/scanner/port"
@@ -86,6 +87,23 @@ func (r *scannerRepo) Update(ctx context.Context, scanner domain.ScannerDomain) 
 func (r *scannerRepo) Delete(ctx context.Context, scannerID int64) error {
 	log.Printf("Repository: Deleting scanner with ID: %d", scannerID)
 
+	// Check if scanner exists first
+	var count int64
+	err := r.db.Table("scanners").WithContext(ctx).
+		Where("id = ?", scannerID).
+		Where("deleted_at IS NULL").
+		Count(&count).Error
+
+	if err != nil {
+		log.Printf("Repository: Error checking scanner existence: %v", err)
+		return err
+	}
+
+	if count == 0 {
+		log.Printf("Repository: Scanner with ID %d not found or already deleted", scannerID)
+		return fmt.Errorf("scanner with ID %d not found", scannerID)
+	}
+
 	// Soft delete by updating the deleted_at timestamp
 	result := r.db.Table("scanners").WithContext(ctx).
 		Where("id = ?", scannerID).
@@ -94,11 +112,6 @@ func (r *scannerRepo) Delete(ctx context.Context, scannerID int64) error {
 	if result.Error != nil {
 		log.Printf("Repository: Error deleting scanner: %v", result.Error)
 		return result.Error
-	}
-
-	if result.RowsAffected == 0 {
-		log.Printf("Repository: No rows affected when deleting scanner with ID: %d", scannerID)
-		return fmt.Errorf("scanner with ID %d not found", scannerID)
 	}
 
 	log.Printf("Repository: Successfully deleted scanner with ID: %d", scannerID)
@@ -161,4 +174,29 @@ func (r *scannerRepo) List(ctx context.Context, filter domain.ScannerFilter) ([]
 	}
 
 	return result, nil
+}
+
+func (r *scannerRepo) BatchUpdateEnabled(ctx context.Context, scannerIDs []int64, enabled bool) error {
+	log.Printf("Repository: Batch updating %d scanners to enabled=%v", len(scannerIDs), enabled)
+
+	if len(scannerIDs) == 0 {
+		return nil // Nothing to update
+	}
+
+	// Using GORM to update all scanners in the list at once
+	result := r.db.Table("scanners").WithContext(ctx).
+		Where("id IN ?", scannerIDs).
+		Where("deleted_at IS NULL"). // Only update non-deleted scanners
+		Updates(map[string]interface{}{
+			"is_active":  enabled,
+			"updated_at": time.Now(),
+		})
+
+	if result.Error != nil {
+		log.Printf("Repository: Error in batch update: %v", result.Error)
+		return result.Error
+	}
+
+	log.Printf("Repository: Successfully updated %d scanners", result.RowsAffected)
+	return nil
 }

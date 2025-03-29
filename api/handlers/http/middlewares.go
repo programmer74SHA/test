@@ -1,6 +1,8 @@
 package http
 
 import (
+	"log"
+
 	"gitlab.apk-group.net/siem/backend/asset-discovery/pkg/jwt"
 	"gitlab.apk-group.net/siem/backend/asset-discovery/pkg/logger"
 
@@ -47,14 +49,20 @@ func setTransaction(db *gorm.DB) fiber.Handler {
 
 		err := c.Next()
 
-		if c.Response().StatusCode() >= 300 {
-			return context.Rollback(c.UserContext())
-		}
-
-		if err := context.CommitOrRollback(c.UserContext(), true); err != nil {
+		// If there's an error or status code >= 300, rollback
+		if err != nil || c.Response().StatusCode() >= 300 {
+			rollbackErr := context.Rollback(c.UserContext())
+			if rollbackErr != nil {
+				log.Printf("Error rolling back transaction: %v", rollbackErr)
+			}
 			return err
 		}
 
-		return err
+		// Commit the transaction
+		if commitErr := context.CommitOrRollback(c.UserContext(), true); commitErr != nil {
+			return commitErr
+		}
+
+		return nil
 	}
 }

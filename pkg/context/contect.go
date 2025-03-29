@@ -86,22 +86,30 @@ func Rollback(ctx context.Context) error {
 }
 
 func CommitOrRollback(ctx context.Context, shouldLog bool) error {
-	commitErr := Commit(ctx)
+	appCtx, ok := ctx.(*appContext)
+	if !ok || !appCtx.shouldCommit {
+		return nil
+	}
+
+	if appCtx.db == nil {
+		return nil
+	}
+
+	commitErr := appCtx.db.Commit().Error
 	if commitErr == nil {
 		return nil
 	}
 
 	if shouldLog {
-		log.Println("error on committing transaction, err :", commitErr.Error())
+		log.Println("error on committing transaction, err:", commitErr.Error())
 	}
 
-	if err := Rollback(ctx); err != nil {
-		log.Println("error on rollback transaction, err :", err.Error())
+	if err := appCtx.db.Rollback().Error; err != nil {
+		log.Println("error on rollback transaction, err:", err.Error())
 	}
 
 	return commitErr
 }
-
 func SetLogger(ctx context.Context, logger *slog.Logger) {
 	if appCtx, ok := ctx.(*appContext); ok {
 		appCtx.logger = logger

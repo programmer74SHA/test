@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"log"
 	"strconv"
 	"time"
 
@@ -123,12 +124,22 @@ func (s *ScannerService) UpdateScanner(ctx context.Context, req *pb.UpdateScanne
 }
 
 func (s *ScannerService) DeleteScanner(ctx context.Context, req *pb.DeleteScannerRequest) error {
+	log.Printf("API Service: Deleting scanner with ID: %s", req.GetId())
+
 	id, err := strconv.ParseInt(req.GetId(), 10, 64)
 	if err != nil {
+		log.Printf("API Service: Invalid scanner ID format: %v", err)
 		return ErrInvalidScannerInput
 	}
 
-	return s.service.DeleteScanner(ctx, id)
+	err = s.service.DeleteScanner(ctx, id)
+	if err != nil {
+		log.Printf("API Service: Error from service layer: %v", err)
+		return err
+	}
+
+	log.Printf("API Service: Successfully deleted scanner")
+	return nil
 }
 
 func (s *ScannerService) DeleteScanners(ctx context.Context, req *pb.DeleteScannersRequest) error {
@@ -184,27 +195,35 @@ func (s *ScannerService) ListScanners(ctx context.Context, req *pb.ListScannersR
 }
 
 func (s *ScannerService) BatchUpdateScannersEnabled(ctx context.Context, req *pb.BatchUpdateScannersEnabledRequest) error {
+	log.Printf("API Service: Batch updating scanners, enabled=%v, IDs count: %d", req.GetEnabled(), len(req.GetIds()))
+
+	if len(req.GetIds()) == 0 {
+		log.Printf("API Service: Empty scanner ID list provided")
+		return nil // Nothing to update
+	}
+
+	var ids []int64
 	for _, idStr := range req.GetIds() {
 		id, err := strconv.ParseInt(idStr, 10, 64)
 		if err != nil {
-			// Continue with other IDs even if one is invalid
-			continue
+			log.Printf("API Service: Invalid scanner ID format: %s, error: %v", idStr, err)
+			continue // Skip invalid IDs
 		}
-
-		// Get existing scanner
-		existingScanner, err := s.service.GetScannerByID(ctx, id)
-		if err != nil {
-			// Skip scanners that can't be found
-			continue
-		}
-
-		// Set enabled status and update
-		existingScanner.Enabled = req.GetEnabled()
-		err = s.service.UpdateScanner(ctx, *existingScanner)
-		if err != nil && !errors.Is(err, ErrScannerNotFound) {
-			return err
-		}
+		ids = append(ids, id)
 	}
 
+	if len(ids) == 0 {
+		log.Printf("API Service: No valid scanner IDs to process")
+		return nil
+	}
+
+	// Call the service method with the parsed IDs and enabled status
+	err := s.service.BatchUpdateScannersEnabled(ctx, ids, req.GetEnabled())
+	if err != nil {
+		log.Printf("API Service: Error from service layer: %v", err)
+		return err
+	}
+
+	log.Printf("API Service: Successfully batch updated scanners")
 	return nil
 }
