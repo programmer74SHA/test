@@ -42,7 +42,7 @@ func (r *scannerRepo) Create(ctx context.Context, scanner domain.ScannerDomain) 
 func (r *scannerRepo) GetByID(ctx context.Context, scannerID int64) (*domain.ScannerDomain, error) {
 	log.Printf("Repository: Getting scanner with ID: %d", scannerID)
 
-	var scanner types.Scanner
+	var scanner types.ScannerModel
 	err := r.db.Table("scanners").WithContext(ctx).
 		Where("id = ?", scannerID).
 		First(&scanner).Error
@@ -145,7 +145,7 @@ func (r *scannerRepo) List(ctx context.Context, filter domain.ScannerFilter) ([]
 	})
 	fmt.Println("SQL Query:", sqlDb.Explain(query.Statement.SQL.String(), query.Statement.Vars...))
 
-	var scanners []types.Scanner
+	var scanners []types.ScannerModel
 	err := query.Find(&scanners).Error
 	if err != nil {
 		log.Printf("Repository: Error listing scanners: %v", err)

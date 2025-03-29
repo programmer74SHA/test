@@ -2,11 +2,7 @@ package domain
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
-
-type ScannerUUID = uuid.UUID
 
 type ScannerType string
 
@@ -17,7 +13,7 @@ const (
 )
 
 type ScannerDomain struct {
-	ID          ScannerUUID
+	ID          int64 // Changed from ScannerUUID to int64
 	Name        string
 	Type        ScannerType
 	Description string
@@ -26,6 +22,7 @@ type ScannerDomain struct {
 	Password    string
 	APIKey      string
 	Enabled     bool
+	UserID      string // UserID as string to match database
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	DeletedAt   time.Time
@@ -37,6 +34,30 @@ type ScannerFilter struct {
 	Enabled *bool
 }
 
-func ScannerUUIDFromString(s string) (uuid.UUID, error) {
-	return uuid.Parse(s)
+// GetScannerTypeFromInt converts an integer representation to a ScannerType
+func GetScannerTypeFromInt(scanType int) ScannerType {
+	switch scanType {
+	case 1:
+		return ScannerTypeNmap
+	case 2:
+		return ScannerTypeVCenter
+	case 3:
+		return ScannerTypeDomain
+	default:
+		return ""
+	}
+}
+
+// GetIntFromScannerType converts a ScannerType to its integer representation
+func GetIntFromScannerType(scanType ScannerType) int {
+	switch scanType {
+	case ScannerTypeNmap:
+		return 1
+	case ScannerTypeVCenter:
+		return 2
+	case ScannerTypeDomain:
+		return 3
+	default:
+		return 0
+	}
 }

@@ -36,23 +36,23 @@ func (r *userRepo) GetByUsername(ctx context.Context, filter domain.UserFilter) 
 	var user domain.User
 	q := r.db.Table("users").Debug().WithContext(ctx)
 	if len(uf.FirstName) > 0 {
-		q.Where("firstname = ?", uf.FirstName)
+		q.Where("first_name = ?", uf.FirstName)
 	}
 
 	if len(uf.LastName) > 0 {
-		q.Where("lastname = ?", uf.LastName)
+		q.Where("last_name = ?", uf.LastName)
 	}
 
 	if len(uf.Username) > 0 {
 		q.Where("username = ?", uf.Username)
 	}
 
-	err := q.Find(&user).Error
+	err := q.First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return &user, nil
+			return nil, nil
 		}
-		return &user, err
+		return nil, err
 	}
 	return &user, nil
 }
@@ -63,7 +63,7 @@ func (r *userRepo) StoreSession(ctx context.Context, session domain.Sessions) er
 }
 
 func (r *userRepo) InvalidateSession(ctx context.Context, refreshToken string) error {
-	result := r.db.WithContext(ctx).Table("sessions").Where("refershtoken = ?", refreshToken).Update("islogin", false)
+	result := r.db.WithContext(ctx).Table("sessions").Where("refresh_token = ?", refreshToken).Update("is_login", false)
 	if result.Error != nil {
 		return result.Error
 	}

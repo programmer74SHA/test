@@ -8,8 +8,7 @@ import (
 )
 
 // ScannerDomain2Storage converts a domain scanner model to a storage scanner model
-func ScannerDomain2Storage(scanner domain.ScannerDomain) *types.Scanner {
-	var description *string
+func ScannerDomain2Storage(scanner domain.ScannerDomain) *types.ScannerModel {
 	var scanType *int
 	var userID *string
 
@@ -21,19 +20,19 @@ func ScannerDomain2Storage(scanner domain.ScannerDomain) *types.Scanner {
 		}
 	}
 
-	if scanner.Description != "" {
-		description = &scanner.Description
-	}
-
 	if scanner.UserID != "" {
 		userID = &scanner.UserID
 	}
 
-	return &types.Scanner{
+	return &types.ScannerModel{
 		ID:        scanner.ID,
 		Name:      scanner.Name,
 		ScanType:  scanType,
 		IsActive:  scanner.Enabled,
+		Endpoint:  scanner.Endpoint,
+		Username:  scanner.Username,
+		Password:  scanner.Password,
+		ApiKey:    scanner.APIKey,
 		UserID:    userID,
 		CreatedAt: scanner.CreatedAt,
 		UpdatedAt: &scanner.UpdatedAt,
@@ -42,15 +41,13 @@ func ScannerDomain2Storage(scanner domain.ScannerDomain) *types.Scanner {
 }
 
 // ScannerStorage2Domain converts a storage scanner model to a domain scanner model
-func ScannerStorage2Domain(scanner types.Scanner) *domain.ScannerDomain {
+func ScannerStorage2Domain(scanner types.ScannerModel) *domain.ScannerDomain {
 	var scannerType domain.ScannerType
 	if scanner.ScanType != nil {
 		scannerType = domain.GetScannerTypeFromInt(*scanner.ScanType)
 	}
 
-	var description string
 	var userID string
-
 	if scanner.UserID != nil {
 		userID = *scanner.UserID
 	}
@@ -68,7 +65,11 @@ func ScannerStorage2Domain(scanner types.Scanner) *domain.ScannerDomain {
 		ID:          scanner.ID,
 		Name:        scanner.Name,
 		Type:        scannerType,
-		Description: description,
+		Description: "",
+		Endpoint:    scanner.Endpoint,
+		Username:    scanner.Username,
+		Password:    scanner.Password,
+		APIKey:      scanner.ApiKey,
 		Enabled:     scanner.IsActive,
 		UserID:      userID,
 		CreatedAt:   scanner.CreatedAt,
@@ -78,8 +79,8 @@ func ScannerStorage2Domain(scanner types.Scanner) *domain.ScannerDomain {
 }
 
 // ScannerFilterDomain2Storage converts a domain scanner filter to a storage scanner filter
-func ScannerFilterDomain2Storage(filter domain.ScannerFilter) *types.ScannerFilter {
-	return &types.ScannerFilter{
+func ScannerFilterDomain2Storage(filter domain.ScannerFilter) *types.ScannerModelFilter {
+	return &types.ScannerModelFilter{
 		Name:    filter.Name,
 		Type:    string(filter.Type),
 		Enabled: filter.Enabled,

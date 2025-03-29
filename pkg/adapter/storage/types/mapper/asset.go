@@ -7,34 +7,61 @@ import (
 
 func AssetDomain2Storage(asset domain.AssetDomain) *types.Asset {
 	return &types.Asset{
-		ID:          asset.ID.String(),
-		Name:        &asset.Name,
-		Domain:      &asset.Domain,
-		Hostname:    asset.Hostname,
-		OSName:      &asset.OSName,
-		OSVersion:   &asset.OSVersion,
-		Type:        asset.Type,
-		IPAddress:   asset.IP,
-		Description: &asset.Description,
-		CreatedAt:   asset.CreatedAt,
-		UpdatedAt:   &asset.UpdatedAt,
+		ID:        asset.ID.String(),
+		Name:      &asset.Name,
+		Domain:    &asset.Domain,
+		Hostname:  asset.Hostname,
+		IPAddress: asset.IP,
+		OSName:    &asset.OSName,
+		OSVersion: &asset.OSVersion,
+		AssetType: asset.Type,
+		CreatedAt: asset.CreatedAt,
+		UpdatedAt: &asset.UpdatedAt,
 	}
 }
 
 func AssetStorage2Domain(asset types.Asset) (*domain.AssetDomain, error) {
 	uid, err := domain.AssetUUIDFromString(asset.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	name := ""
+	if asset.Name != nil {
+		name = *asset.Name
+	}
+
+	domain := ""
+	if asset.Domain != nil {
+		domain = *asset.Domain
+	}
+
+	osName := ""
+	if asset.OSName != nil {
+		osName = *asset.OSName
+	}
+
+	osVersion := ""
+	if asset.OSVersion != nil {
+		osVersion = *asset.OSVersion
+	}
+
+	updateAt := asset.CreatedAt
+	if asset.UpdatedAt != nil {
+		updateAt = *asset.UpdatedAt
+	}
 
 	return &domain.AssetDomain{
 		ID:          uid,
-		Name:        *asset.Name,
-		Domain:      *asset.Domain,
+		Name:        name,
+		Domain:      domain,
 		Hostname:    asset.Hostname,
-		OSName:      *asset.OSName,
-		OSVersion:   *asset.OSVersion,
-		Type:        asset.Type,
+		OSName:      osName,
+		OSVersion:   osVersion,
+		Type:        asset.AssetType,
 		IP:          asset.IPAddress,
-		Description: asset.Type,
+		Description: "",
 		CreatedAt:   asset.CreatedAt,
-		UpdatedAt:   *asset.UpdatedAt,
-	}, err
+		UpdatedAt:   updateAt,
+	}, nil
 }

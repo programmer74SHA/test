@@ -34,21 +34,9 @@ func NewMysqlConnection(cfg DBConnOptions) (*gorm.DB, error) {
 func GormMigrations(db *gorm.DB) {
 	// Models to migrate - ordered to respect foreign key dependencies
 	models := []interface{}{
-		&types.User{},            // No foreign key dependencies - must be first for Session
-		&types.Asset{},           // No foreign key dependencies
-		&types.Scanner{},         // Has optional UserID reference
-		&types.ScanJob{},         // Depends on Scanner
-		&types.Port{},            // Depends on Asset
-		&types.VMwareVM{},        // Depends on Asset
-		&types.AssetScanJob{},    // Depends on Asset and ScanJob
-		&types.NmapMetadata{},    // Depends on Scanner
-		&types.NmapIPScan{},      // Depends on NmapMetadata
-		&types.NmapNetworkScan{}, // Depends on NmapMetadata
-		&types.NmapRangeScan{},   // Depends on NmapMetadata
-		&types.DomainMetadata{},  // Depends on Scanner
-		&types.VCenterMetadata{}, // Depends on Scanner
-		&types.Schedule{},        // Depends on Scanner
-		&types.Session{},         // Depends on User (must be after User)
+		&types.UserModel{},    // No foreign key dependencies - must be first for Session
+		&types.SessionModel{}, // Depends on User
+		&types.ScannerModel{}, // Has optional UserID reference
 	}
 
 	// Run migration

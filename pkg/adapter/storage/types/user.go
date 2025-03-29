@@ -4,7 +4,8 @@ import (
 	"time"
 )
 
-type User struct {
+// UserModel represents a user in the database
+type UserModel struct {
 	UserID    string     `gorm:"column:user_id;primaryKey;size:100"`
 	FirstName *string    `gorm:"column:first_name;size:100"`
 	LastName  *string    `gorm:"column:last_name;size:100"`
@@ -16,22 +17,31 @@ type User struct {
 	UpdatedAt *time.Time `gorm:"column:updated_at;type:datetime"`
 	DeletedAt *time.Time `gorm:"column:deleted_at;type:datetime"`
 
-	// Scanner  Scanner   `gorm:"foreignKey:UserID"`
-	Sessions []Session `gorm:"foreignKey:UserID"`
+	Sessions []SessionModel `gorm:"foreignKey:UserID"`
 }
 
-type UserFilter struct {
+func (UserModel) TableName() string {
+	return "users"
+}
+
+// UserModelFilter struct for filtering users
+type UserModelFilter struct {
 	FirstName string
 	LastName  string
 	Username  string
 }
 
-type Session struct {
+// SessionModel represents a user session in the database
+type SessionModel struct {
 	UserID       string    `gorm:"column:user_id;size:100;not null"`
 	AccessToken  string    `gorm:"column:access_token;size:200;not null;uniqueIndex"`
 	RefreshToken string    `gorm:"column:refresh_token;size:200;not null;primaryKey"`
 	CreatedAt    time.Time `gorm:"column:created_at;type:datetime;not null"`
 	IsLogin      bool      `gorm:"column:is_login;default:1"`
 
-	// User User `gorm:"foreignKey:UserID"`
+	User UserModel `gorm:"foreignKey:UserID"`
+}
+
+func (SessionModel) TableName() string {
+	return "sessions"
 }
