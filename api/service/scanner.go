@@ -1,12 +1,11 @@
-// api/service/scanner.go
 package service
 
 import (
 	"context"
 	"errors"
+	"strconv"
 	"time"
 
-	"github.com/google/uuid"
 	"gitlab.apk-group.net/siem/backend/asset-discovery/api/pb"
 	"gitlab.apk-group.net/siem/backend/asset-discovery/internal/scanner"
 	"gitlab.apk-group.net/siem/backend/asset-discovery/internal/scanner/domain"
@@ -30,6 +29,7 @@ func NewScannerService(srv scannerPort.Service) *ScannerService {
 		service: srv,
 	}
 }
+
 func (s *ScannerService) CreateScanner(ctx context.Context, req *pb.CreateScannerRequest) (*pb.Scanner, error) {
 	// Validate required fields
 	if req.GetName() == "" || req.GetType() == "" || req.GetEndpoint() == "" {
@@ -37,7 +37,6 @@ func (s *ScannerService) CreateScanner(ctx context.Context, req *pb.CreateScanne
 	}
 
 	scanner := domain.ScannerDomain{
-		ID:          uuid.New(),
 		Name:        req.GetName(),
 		Type:        domain.ScannerType(req.GetType()),
 		Description: req.GetDescription(),
@@ -56,7 +55,7 @@ func (s *ScannerService) CreateScanner(ctx context.Context, req *pb.CreateScanne
 	}
 
 	return &pb.Scanner{
-		Id:          id.String(),
+		Id:          strconv.FormatInt(id, 10),
 		Name:        scanner.Name,
 		Type:        string(scanner.Type),
 		Description: scanner.Description,
@@ -69,7 +68,7 @@ func (s *ScannerService) CreateScanner(ctx context.Context, req *pb.CreateScanne
 }
 
 func (s *ScannerService) GetScanner(ctx context.Context, req *pb.GetScannerRequest) (*pb.Scanner, error) {
-	id, err := uuid.Parse(req.GetId())
+	id, err := strconv.ParseInt(req.GetId(), 10, 64)
 	if err != nil {
 		return nil, ErrInvalidScannerInput
 	}
@@ -80,7 +79,7 @@ func (s *ScannerService) GetScanner(ctx context.Context, req *pb.GetScannerReque
 	}
 
 	return &pb.Scanner{
-		Id:          scanner.ID.String(),
+		Id:          strconv.FormatInt(scanner.ID, 10),
 		Name:        scanner.Name,
 		Type:        string(scanner.Type),
 		Description: scanner.Description,
@@ -93,7 +92,7 @@ func (s *ScannerService) GetScanner(ctx context.Context, req *pb.GetScannerReque
 }
 
 func (s *ScannerService) UpdateScanner(ctx context.Context, req *pb.UpdateScannerRequest) (*pb.Scanner, error) {
-	id, err := uuid.Parse(req.GetId())
+	id, err := strconv.ParseInt(req.GetId(), 10, 64)
 	if err != nil {
 		return nil, ErrInvalidScannerInput
 	}
@@ -121,7 +120,7 @@ func (s *ScannerService) UpdateScanner(ctx context.Context, req *pb.UpdateScanne
 	}
 
 	return &pb.Scanner{
-		Id:          scanner.ID.String(),
+		Id:          strconv.FormatInt(scanner.ID, 10),
 		Name:        scanner.Name,
 		Type:        string(scanner.Type),
 		Description: scanner.Description,
@@ -134,7 +133,7 @@ func (s *ScannerService) UpdateScanner(ctx context.Context, req *pb.UpdateScanne
 }
 
 func (s *ScannerService) DeleteScanner(ctx context.Context, req *pb.DeleteScannerRequest) error {
-	id, err := uuid.Parse(req.GetId())
+	id, err := strconv.ParseInt(req.GetId(), 10, 64)
 	if err != nil {
 		return ErrInvalidScannerInput
 	}
@@ -143,14 +142,14 @@ func (s *ScannerService) DeleteScanner(ctx context.Context, req *pb.DeleteScanne
 }
 
 func (s *ScannerService) DeleteScanners(ctx context.Context, req *pb.DeleteScannersRequest) error {
-	for _, id := range req.GetIds() {
-		scannerID, err := uuid.Parse(id)
+	for _, idStr := range req.GetIds() {
+		id, err := strconv.ParseInt(idStr, 10, 64)
 		if err != nil {
 			// Continue with other IDs even if one is invalid
 			continue
 		}
 
-		err = s.service.DeleteScanner(ctx, scannerID)
+		err = s.service.DeleteScanner(ctx, id)
 		if err != nil && !errors.Is(err, ErrScannerNotFound) {
 			return err
 		}
@@ -171,25 +170,23 @@ func (s *ScannerService) ListScanners(ctx context.Context, req *pb.ListScannersR
 		Enabled: enabledFilter,
 	}
 
-	// The error is here - it's using "service" variable which isn't defined
-	// It should use "s.service" which is the field in the ScannerService struct
 	scanners, err := s.service.ListScanners(ctx, filter)
 	if err != nil {
 		return nil, err
 	}
 
 	var pbScanners []*pb.Scanner
-	for _, s := range scanners {
+	for _, scanner := range scanners {
 		pbScanners = append(pbScanners, &pb.Scanner{
-			Id:          s.ID.String(),
-			Name:        s.Name,
-			Type:        string(s.Type),
-			Description: s.Description,
-			Endpoint:    s.Endpoint,
-			Username:    s.Username,
-			Password:    s.Password,
-			ApiKey:      s.APIKey,
-			Enabled:     s.Enabled,
+			Id:          strconv.FormatInt(scanner.ID, 10),
+			Name:        scanner.Name,
+			Type:        string(scanner.Type),
+			Description: scanner.Description,
+			Endpoint:    scanner.Endpoint,
+			Username:    scanner.Username,
+			Password:    scanner.Password,
+			ApiKey:      scanner.APIKey,
+			Enabled:     scanner.Enabled,
 		})
 	}
 
@@ -199,15 +196,15 @@ func (s *ScannerService) ListScanners(ctx context.Context, req *pb.ListScannersR
 }
 
 func (s *ScannerService) BatchUpdateScannersEnabled(ctx context.Context, req *pb.BatchUpdateScannersEnabledRequest) error {
-	for _, id := range req.GetIds() {
-		scannerID, err := uuid.Parse(id)
+	for _, idStr := range req.GetIds() {
+		id, err := strconv.ParseInt(idStr, 10, 64)
 		if err != nil {
 			// Continue with other IDs even if one is invalid
 			continue
 		}
 
 		// Get existing scanner
-		existingScanner, err := s.service.GetScannerByID(ctx, scannerID)
+		existingScanner, err := s.service.GetScannerByID(ctx, id)
 		if err != nil {
 			// Skip scanners that can't be found
 			continue

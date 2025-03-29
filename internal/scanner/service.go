@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log"
 
-	"github.com/google/uuid"
 	"gitlab.apk-group.net/siem/backend/asset-discovery/internal/scanner/domain"
 	scannerPort "gitlab.apk-group.net/siem/backend/asset-discovery/internal/scanner/port"
 )
@@ -28,40 +27,35 @@ func NewScannerService(repo scannerPort.Repo) scannerPort.Service {
 	}
 }
 
-func (s *scannerService) CreateScanner(ctx context.Context, scanner domain.ScannerDomain) (domain.ScannerUUID, error) {
+func (s *scannerService) CreateScanner(ctx context.Context, scanner domain.ScannerDomain) (int64, error) {
 	log.Printf("Service: Creating scanner: %+v", scanner)
 
 	if scanner.Name == "" || scanner.Type == "" {
 		log.Printf("Service: Invalid scanner input - missing name or type")
-		return uuid.Nil, ErrInvalidScannerInput
-	}
-
-	if scanner.ID == uuid.Nil {
-		scanner.ID = uuid.New()
-		log.Printf("Service: Assigned new UUID: %s", scanner.ID)
+		return 0, ErrInvalidScannerInput
 	}
 
 	scannerID, err := s.repo.Create(ctx, scanner)
 	if err != nil {
 		log.Printf("Service: Error creating scanner: %v", err)
-		return uuid.Nil, ErrScannerOnCreate
+		return 0, ErrScannerOnCreate
 	}
 
-	log.Printf("Service: Successfully created scanner with ID: %s", scannerID)
+	log.Printf("Service: Successfully created scanner with ID: %d", scannerID)
 	return scannerID, nil
 }
 
-func (s *scannerService) GetScannerByID(ctx context.Context, scannerUUID domain.ScannerUUID) (*domain.ScannerDomain, error) {
-	log.Printf("Service: Getting scanner with ID: %s", scannerUUID)
+func (s *scannerService) GetScannerByID(ctx context.Context, scannerID int64) (*domain.ScannerDomain, error) {
+	log.Printf("Service: Getting scanner with ID: %d", scannerID)
 
-	scanner, err := s.repo.GetByID(ctx, scannerUUID)
+	scanner, err := s.repo.GetByID(ctx, scannerID)
 	if err != nil {
 		log.Printf("Service: Error from repository: %v", err)
 		return nil, err
 	}
 
 	if scanner == nil {
-		log.Printf("Service: Scanner not found for ID: %s", scannerUUID)
+		log.Printf("Service: Scanner not found for ID: %d", scannerID)
 		return nil, ErrScannerNotFound
 	}
 
@@ -72,7 +66,7 @@ func (s *scannerService) GetScannerByID(ctx context.Context, scannerUUID domain.
 func (s *scannerService) UpdateScanner(ctx context.Context, scanner domain.ScannerDomain) error {
 	log.Printf("Service: Updating scanner: %+v", scanner)
 
-	if scanner.ID == uuid.Nil {
+	if scanner.ID == 0 {
 		log.Printf("Service: Invalid scanner input - missing ID")
 		return ErrInvalidScannerInput
 	}
@@ -96,17 +90,17 @@ func (s *scannerService) UpdateScanner(ctx context.Context, scanner domain.Scann
 	return nil
 }
 
-func (s *scannerService) DeleteScanner(ctx context.Context, scannerUUID domain.ScannerUUID) error {
-	log.Printf("Service: Deleting scanner with ID: %s", scannerUUID)
+func (s *scannerService) DeleteScanner(ctx context.Context, scannerID int64) error {
+	log.Printf("Service: Deleting scanner with ID: %d", scannerID)
 
 	// Check if scanner exists
-	_, err := s.GetScannerByID(ctx, scannerUUID)
+	_, err := s.GetScannerByID(ctx, scannerID)
 	if err != nil {
 		log.Printf("Service: Scanner existence check failed: %v", err)
 		return err
 	}
 
-	err = s.repo.Delete(ctx, scannerUUID)
+	err = s.repo.Delete(ctx, scannerID)
 	if err != nil {
 		log.Printf("Service: Error deleting scanner: %v", err)
 		return ErrScannerOnDelete

@@ -1,10 +1,8 @@
 package mapper
 
 import (
-	"strconv"
 	"time"
 
-	"github.com/google/uuid"
 	"gitlab.apk-group.net/siem/backend/asset-discovery/internal/scanner/domain"
 	"gitlab.apk-group.net/siem/backend/asset-discovery/pkg/adapter/storage/types"
 )
@@ -27,22 +25,12 @@ func ScannerDomain2Storage(scanner domain.ScannerDomain) *types.Scanner {
 		description = &scanner.Description
 	}
 
-	if scanner.UserID != uuid.Nil {
-		id := scanner.UserID.String()
-		userID = &id
-	}
-
-	// If there's a stored numeric ID, use it to set the database ID
-	var id int64
-	if scanner.IDNumeric != "" {
-		parsedID, err := strconv.ParseInt(scanner.IDNumeric, 10, 64)
-		if err == nil {
-			id = parsedID
-		}
+	if scanner.UserID != "" {
+		userID = &scanner.UserID
 	}
 
 	return &types.Scanner{
-		ID:        id,
+		ID:        scanner.ID,
 		Name:      scanner.Name,
 		ScanType:  scanType,
 		IsActive:  scanner.Enabled,
@@ -54,27 +42,17 @@ func ScannerDomain2Storage(scanner domain.ScannerDomain) *types.Scanner {
 }
 
 // ScannerStorage2Domain converts a storage scanner model to a domain scanner model
-func ScannerStorage2Domain(scanner types.Scanner) (*domain.ScannerDomain, error) {
-	// Create a UUID for the domain layer
-	scannerUUID := uuid.New()
-
-	// Store the numeric ID in the domain model for future reference
-	idNumeric := strconv.FormatInt(scanner.ID, 10)
-
+func ScannerStorage2Domain(scanner types.Scanner) *domain.ScannerDomain {
 	var scannerType domain.ScannerType
 	if scanner.ScanType != nil {
 		scannerType = domain.GetScannerTypeFromInt(*scanner.ScanType)
 	}
 
 	var description string
+	var userID string
 
-	var userID uuid.UUID
 	if scanner.UserID != nil {
-		parsedUserID, err := uuid.Parse(*scanner.UserID)
-		if err != nil {
-			return nil, err
-		}
-		userID = parsedUserID
+		userID = *scanner.UserID
 	}
 
 	var updatedAt, deletedAt time.Time
@@ -87,8 +65,7 @@ func ScannerStorage2Domain(scanner types.Scanner) (*domain.ScannerDomain, error)
 	}
 
 	return &domain.ScannerDomain{
-		ID:          scannerUUID,
-		IDNumeric:   idNumeric,
+		ID:          scanner.ID,
 		Name:        scanner.Name,
 		Type:        scannerType,
 		Description: description,
@@ -97,7 +74,7 @@ func ScannerStorage2Domain(scanner types.Scanner) (*domain.ScannerDomain, error)
 		CreatedAt:   scanner.CreatedAt,
 		UpdatedAt:   updatedAt,
 		DeletedAt:   deletedAt,
-	}, nil
+	}
 }
 
 // ScannerFilterDomain2Storage converts a domain scanner filter to a storage scanner filter

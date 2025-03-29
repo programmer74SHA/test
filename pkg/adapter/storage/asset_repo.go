@@ -39,7 +39,7 @@ func (r *assetRepo) GetByID(ctx context.Context, assetUUID domain.AssetUUID) (*d
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, err
 	}
-	if asset.ID == ""{
+	if asset.ID == "" {
 		return nil, nil
 	}
 	return mapper.AssetStorage2Domain(asset)
