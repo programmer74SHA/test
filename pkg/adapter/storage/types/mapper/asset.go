@@ -1,39 +1,73 @@
 package mapper
 
 import (
+	"fmt"
+	"strconv"
+	"time"
+
+	"github.com/google/uuid"
 	"gitlab.apk-group.net/siem/backend/asset-discovery/internal/asset/domain"
 	"gitlab.apk-group.net/siem/backend/asset-discovery/pkg/adapter/storage/types"
 )
 
+// AssetDomain2Storage converts a domain asset model to a storage asset model
 func AssetDomain2Storage(asset domain.AssetDomain) *types.Asset {
+	// Convert UUID to string, then extract a numeric value for the ID
+	idStr := asset.ID.String()
+	// Extract last 9 characters and convert to int64 (avoiding potential overflow)
+	idPart := idStr[len(idStr)-9:]
+	id, err := strconv.ParseInt(idPart, 16, 64)
+	if err != nil {
+		// If conversion fails, use a fallback approach
+		id = time.Now().UnixNano() // Use timestamp as fallback ID
+	}
+
+	// Handle nullable fields with pointers
+	name := &asset.Name
+	domainStr := &asset.Domain
+	osName := &asset.OSName
+	osVersion := &asset.OSVersion
+	updatedAt := &asset.UpdatedAt
+
 	return &types.Asset{
-		ID:        asset.ID.String(),
-		Name:      &asset.Name,
-		Domain:    &asset.Domain,
+		ID:        id,
+		Name:      name,
+		Domain:    domainStr,
 		Hostname:  asset.Hostname,
 		IPAddress: asset.IP,
-		OSName:    &asset.OSName,
-		OSVersion: &asset.OSVersion,
+		OSName:    osName,
+		OSVersion: osVersion,
 		AssetType: asset.Type,
 		CreatedAt: asset.CreatedAt,
-		UpdatedAt: &asset.UpdatedAt,
+		UpdatedAt: updatedAt,
 	}
 }
 
+// AssetStorage2Domain converts a storage asset model to a domain asset model
 func AssetStorage2Domain(asset types.Asset) (*domain.AssetDomain, error) {
-	uid, err := domain.AssetUUIDFromString(asset.ID)
+	// Create a deterministic UUID from int64 ID
+	// Format the int64 as a hex string and use it to construct a UUID
+	idHex := fmt.Sprintf("%016x", asset.ID)
+	uuidStr := fmt.Sprintf("00000000-0000-0000-0000-%s", idHex[:12])
+
+	uid, err := uuid.Parse(uuidStr)
 	if err != nil {
-		return nil, err
+		// Fallback to random UUID if parsing fails
+		uid, err = uuid.NewRandom()
+		if err != nil {
+			return nil, err
+		}
 	}
 
+	// Handle nullable fields
 	name := ""
 	if asset.Name != nil {
 		name = *asset.Name
 	}
 
-	domain := ""
+	domainStr := ""
 	if asset.Domain != nil {
-		domain = *asset.Domain
+		domainStr = *asset.Domain
 	}
 
 	osName := ""
@@ -46,15 +80,15 @@ func AssetStorage2Domain(asset types.Asset) (*domain.AssetDomain, error) {
 		osVersion = *asset.OSVersion
 	}
 
-	updateAt := asset.CreatedAt
+	updatedAt := asset.CreatedAt
 	if asset.UpdatedAt != nil {
-		updateAt = *asset.UpdatedAt
+		updatedAt = *asset.UpdatedAt
 	}
 
 	return &domain.AssetDomain{
 		ID:          uid,
 		Name:        name,
-		Domain:      domain,
+		Domain:      domainStr,
 		Hostname:    asset.Hostname,
 		OSName:      osName,
 		OSVersion:   osVersion,
@@ -62,6 +96,6 @@ func AssetStorage2Domain(asset types.Asset) (*domain.AssetDomain, error) {
 		IP:          asset.IPAddress,
 		Description: "",
 		CreatedAt:   asset.CreatedAt,
-		UpdatedAt:   updateAt,
+		UpdatedAt:   updatedAt,
 	}, nil
 }
