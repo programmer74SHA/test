@@ -106,6 +106,12 @@ func (s *scannerService) DeleteScanner(ctx context.Context, scannerID int64) err
 		return ErrScannerNotFound
 	}
 
+	// If scanner is already deleted (has DeletedAt), we consider this a success
+	if !scanner.DeletedAt.IsZero() {
+		log.Printf("Service: Scanner is already deleted, ID: %d", scannerID)
+		return nil
+	}
+
 	err = s.repo.Delete(ctx, scannerID)
 	if err != nil {
 		log.Printf("Service: Error deleting scanner: %v", err)

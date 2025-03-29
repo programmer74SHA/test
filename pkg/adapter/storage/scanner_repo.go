@@ -46,6 +46,7 @@ func (r *scannerRepo) GetByID(ctx context.Context, scannerID int64) (*domain.Sca
 	var scanner types.ScannerModel
 	err := r.db.Table("scanners").WithContext(ctx).
 		Where("id = ?", scannerID).
+		// Remove the deleted_at IS NULL condition to get all scanners including deleted ones
 		First(&scanner).Error
 
 	if err != nil {
@@ -87,21 +88,25 @@ func (r *scannerRepo) Update(ctx context.Context, scanner domain.ScannerDomain) 
 func (r *scannerRepo) Delete(ctx context.Context, scannerID int64) error {
 	log.Printf("Repository: Deleting scanner with ID: %d", scannerID)
 
-	// Check if scanner exists first
-	var count int64
+	// First, check if the scanner exists at all (regardless of deleted status)
+	var scanner types.ScannerModel
 	err := r.db.Table("scanners").WithContext(ctx).
 		Where("id = ?", scannerID).
-		Where("deleted_at IS NULL").
-		Count(&count).Error
+		First(&scanner).Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Printf("Repository: Scanner with ID %d does not exist", scannerID)
+			return fmt.Errorf("scanner with ID %d not found", scannerID)
+		}
 		log.Printf("Repository: Error checking scanner existence: %v", err)
 		return err
 	}
 
-	if count == 0 {
-		log.Printf("Repository: Scanner with ID %d not found or already deleted", scannerID)
-		return fmt.Errorf("scanner with ID %d not found", scannerID)
+	// Check if it's already deleted
+	if scanner.DeletedAt != nil {
+		log.Printf("Repository: Scanner with ID %d is already deleted", scannerID)
+		return nil // Success - already deleted
 	}
 
 	// Soft delete by updating the deleted_at timestamp
